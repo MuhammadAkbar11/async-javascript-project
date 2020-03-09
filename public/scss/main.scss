@@ -18,6 +18,14 @@ body {
 	color: $bigStone;
 }
 
+.jumbotron-fluid {
+	background: url('https://www.static-src.com/siva/asset//03_2020/so-march--hoemepage-591x197.jpg?output-format=webp'),
+		no-repeat center;
+	background-size: cover;
+	object-fit: cover;
+	height: 50vh !important;
+}
+
 .main--products {
 	height: max-content;
 	width: 100%;

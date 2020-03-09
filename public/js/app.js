@@ -2,36 +2,25 @@ function getProductsUrl(keyword) {
 	return `https://www.blibli.com/backend/search/products?searchTerm=${keyword}`;
 }
 
-function getProducts(keyword, callbackSuccess, CallbackError) {
-	const ajax = new XMLHttpRequest();
-
-	// Track the state changes of the request
-	ajax.onreadystatechange = function() {
-		// Ready state 4 means the request is done
-		if (ajax.readyState === 4) {
-			// 200 is a successful return
-			if (ajax.status === 200) {
+function getProducts(keyword) {
+	// Code Promise Here!
+	const promise = new Promise((resolve, reject) => {
+		//code async
+		const ajax = new XMLHttpRequest();
+		ajax.onload = () => {
+			if (ajax.status == 200) {
 				const data = JSON.parse(ajax.responseText);
-				callbackSuccess(data);
+				resolve(data);
 			} else {
-				CallbackError();
+				reject(Error('Gagal mengambil data produk'));
 			}
-		}
-	};
+		};
+		const url = getProductsUrl(keyword);
+		ajax.open('GET', url);
+		ajax.send();
+	});
 
-	// ajax.onload = () => {
-	// 	if (ajax.status == 200) {
-	// 		const data = JSON.parse(ajax.responseText);
-	// 		callbackSuccess(data);
-	// 	} else {
-	// 		CallbackError();
-	// 	}
-	// };
-	const url = getProductsUrl(keyword);
-
-	ajax.open('GET', url);
-
-	ajax.send();
+	return promise;
 }
 
 function getProductsError() {
@@ -39,26 +28,27 @@ function getProductsError() {
 	alert('Error get Products');
 }
 
-function displayProducts(data) {
+function displayProducts(products) {
 	let rows = '';
-	const products = data.data.products;
 	products.forEach(product => {
-		console.log(product);
 		rows += displayProductUI(product);
+		console.log(product);
 	});
-	const productRows = document.querySelector('.main--products');
+	const productRows = document.querySelector('.products--row');
 	productRows.innerHTML = rows;
 }
 
 function displayProductUI({ images, name }) {
+	const sortName = name
+		.split(' ')
+		.splice(0, 5)
+		.join(' ');
 	return `
     <div class="col-6 col-md-4 col-lg-3">
-            <div class="card card-product bg-secondary rounded-lg px-0 shadow-sm mt-4">
+            <div class="card card-product rounded-lg px-0 shadow-sm mt-4" title="${name}">
 				<img src="${images} " class="card-img-top" alt="..." />
                 <div class="card-body">
-                    <p class="card-text">
-                    ${name}
-				    </p>
+					<small class="card-text px-0"  >${sortName}...</small>
 					<h5 class="card-title d-flex "></h5>
 						
 					<a href="#" class="btn btn-primary">Go somewhere</a>
@@ -68,23 +58,40 @@ function displayProductUI({ images, name }) {
     `;
 }
 
-const buttonClick = [...document.querySelectorAll('.btn--search')];
+document.addEventListener('DOMContentLoaded', () => {
+	const promise = getProducts('discount');
+	promise
+		.then(value => {
+			return value.data.products;
+		})
+		.then(products => {
+			displayProducts(products);
+		});
+});
 
+function checkValue(keyword) {
+	if (!keyword.value == 0) {
+		return true;
+	}
+	return false;
+}
+
+const buttonClick = [...document.querySelectorAll('.btn--search')];
 buttonClick.map(btn => {
 	btn.addEventListener('click', e => {
 		e.preventDefault();
-		[...document.querySelectorAll('#keyword')]
-			.map(keyword => keyword.value)
+		const inputKeyword = [...document.querySelectorAll('#keyword')];
+		inputKeyword
+			.filter(inputValue => checkValue(inputValue))
 			.map(keyword => {
-				getProducts(
-					keyword,
-					function(data) {
-						displayProducts(data);
-					},
-					function() {
-						getProductsError();
-					}
-				);
+				const promise = getProducts(keyword.value);
+				promise
+					.then(value => {
+						return value.data.products;
+					})
+					.then(products => {
+						displayProducts(products);
+					});
 			});
 	});
 });
